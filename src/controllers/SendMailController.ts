@@ -4,6 +4,7 @@ import { SurveyUser } from '../models/SurveyUser';
 import { SurveysRepository } from '../repositories/SurveysRepository';
 import { SurveysUsersRepository } from '../repositories/SurveysUsersRepository';
 import { UsersRespository } from '../repositories/UsersRepository';
+import sendMailService from '../services/sendMailService';
 
 class SendMailController  {
 
@@ -22,9 +23,9 @@ class SendMailController  {
       })
     }
   
-    const surveyAlreadyExist = await surveysRepository.findOne({ id: survey_id });
+    const survey = await surveysRepository.findOne({ id: survey_id });
 
-    if(!surveyAlreadyExist){
+    if(!survey){
       return response.status(400).json({
         error: 'Survey does not exists'
       })
@@ -34,9 +35,12 @@ class SendMailController  {
     const surveyUser = surveysUsersRepository.create({
       user_id: await userAlreadyExist.id,
       survey_id 
-    })
+    });
+    
     await surveysUsersRepository.save(surveyUser);
-      
+
+    await sendMailService.execute(email, survey.title, survey.description);
+
     return response.json(surveyUser);
   }
 }
